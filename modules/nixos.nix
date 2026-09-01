@@ -17,9 +17,7 @@ let
       nixd
       nixfmt
     ]
-    ++ lib.optionals (langEnabled "javascript") [
-      (typescript-language-server or nodePackages.typescript-language-server)
-    ]
+    ++ lib.optionals (langEnabled "javascript") [ typescript-language-server ]
     ++ lib.optionals (langEnabled "json") [ vscode-langservers-extracted ]
     ++ lib.optionals (langEnabled "yaml") [ yaml-language-server ]
     ++ lib.optionals (langEnabled "lua") [ lua-language-server ]
