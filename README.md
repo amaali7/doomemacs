@@ -327,7 +327,7 @@ packages.<system>.doomDir Generated ~/.config/doom tree
 overlays.default          pkgs.doomemacsConfig
 lib.evalDoom              Evaluate modules → config.doomemacs
 lib.mkDoomDir             Render a DOOMDIR derivation
-devShells.default         nixfmt, nixd
+devShells.default         nixfmt-rfc-style, nixd
 formatter                 nixfmt-rfc-style
 templates.default         examples/
 ```

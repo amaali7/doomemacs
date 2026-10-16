@@ -80,7 +80,7 @@
         default = doomDir;
       });
 
-      formatter = forAllSystems (system: (pkgsFor system).nixfmt);
+      formatter = forAllSystems (system: (pkgsFor system).nixfmt-rfc-style);
 
       devShells = forAllSystems (
         system:
@@ -90,7 +90,7 @@
         {
           default = pkgs.mkShell {
             packages = [
-              pkgs.nixfmt
+              pkgs.nixfmt-rfc-style
               pkgs.nixd
               pkgs.git
             ];

@@ -15,9 +15,12 @@ let
     lib.optionals (langEnabled "rust") [ rust-analyzer ]
     ++ lib.optionals (langEnabled "nix") [
       nixd
-      nixfmt
+      nixfmt-rfc-style
     ]
-    ++ lib.optionals (langEnabled "javascript") [ typescript-language-server ]
+    ++ lib.optionals (langEnabled "javascript") [
+      typescript
+      typescript-language-server
+    ]
     ++ lib.optionals (langEnabled "json") [ vscode-langservers-extracted ]
     ++ lib.optionals (langEnabled "yaml") [ yaml-language-server ]
     ++ lib.optionals (langEnabled "lua") [ lua-language-server ]
