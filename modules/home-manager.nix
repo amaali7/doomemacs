@@ -59,6 +59,7 @@ in
     ./features/lsp.nix
     ./features/org.nix
     ./features/cursor.nix
+    ./features/gptel.nix
   ];
 
   config = lib.mkMerge [

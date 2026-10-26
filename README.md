@@ -119,6 +119,7 @@ LSPs system-wide; Home Manager writes `~/.config/doom`.
 | `+lsp.el` | `doomemacs.features.lsp` + `doomemacs.lsp.*` |
 | `+org.el` | `doomemacs.features.org` + `doomemacs.org.*` |
 | `+cursor.el` | `doomemacs.features.cursor` + `doomemacs.cursor.*` |
+| `+gptel.el` | `doomemacs.features.gptel` + `doomemacs.gptel.*` (opt-in) |
 | `themes/noctalia-theme.el` | vendored from the current config |
 | `snippets/rustic-mode/+reg.yasnippet` | vendored |
 
@@ -238,6 +239,33 @@ Disable a shipped feature (file omitted from the store):
 ```nix
 doomemacs.features.cursor = false;
 ```
+
+### gptel (opt-in)
+
+gptel is shipped as a disabled-by-default feature so models and API keys stay
+in your own config. Enable it from your NixOS / Home Manager flake:
+
+```nix
+doomemacs.features.gptel = true;
+
+# Backends, models, and API keys are yours to define:
+doomemacs.gptel.extraConfig = ''
+  (gptel-make-openai "OpenAI"
+    :key (gptel-api-key-from-auth-source "api.openai.com"))
+  (gptel-make-anthropic "Claude"
+    :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com")))
+  (setq gptel-model 'gpt-4.1
+        gptel-backend (gptel-get-backend "Claude"))
+'';
+
+# Optional: just a comment hint in the generated file
+doomemacs.gptel.defaultModel = "gpt-4.1";
+```
+
+Enabling the feature adds `(package! gptel)` and a `+gptel.el` with a
+`use-package! gptel` base setup plus a `<leader> G` keymap (`g` chat buffer,
+`s` send, `m` menu, `a`/`r` context, `w` rewrite). All model/provider/key
+configuration is yours, via `doomemacs.gptel.extraConfig`.
 
 ### 5. Snippets, themes, other files
 

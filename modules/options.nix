@@ -134,6 +134,7 @@ in
       cursor = mkEnableOption "Cursor IDE/CLI feature file (`+cursor.el`)" // {
         default = true;
       };
+      gptel = mkEnableOption "gptel feature file (`+gptel.el`)";
     };
 
     modules = mkOption {
@@ -210,6 +211,7 @@ in
         "lsp"
         "org"
         "cursor"
+        "gptel"
       ];
       description = "Order of generated `+feature` files in config.el.";
     };
@@ -374,6 +376,28 @@ in
       extraConfig = mkOption {
         type = types.lines;
         default = "";
+      };
+    };
+
+    gptel = {
+      defaultModel = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "gpt-4.1";
+        description = ''
+          Default model name shown as a comment in `+gptel.el`. The model
+          itself must be defined by the user (via `gptel.extraConfig` or
+          user config) since it depends on backends and API keys.
+        '';
+      };
+      extraConfig = mkOption {
+        type = types.lines;
+        default = "";
+        description = ''
+          Elisp appended inside `+gptel.el`. Use this to define backends
+          (`gptel-make-openai`, `gptel-make-anthropic`, ...) and set
+          `gptel-model` / API keys. Left to the user on purpose.
+        '';
       };
     };
 

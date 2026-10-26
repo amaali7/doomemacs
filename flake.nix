@@ -41,6 +41,7 @@
             ./modules/features/lsp.nix
             ./modules/features/org.nix
             ./modules/features/cursor.nix
+            ./modules/features/gptel.nix
             { doomemacs.enable = true; }
           ]
           ++ modules;
