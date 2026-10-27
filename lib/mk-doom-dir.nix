@@ -86,7 +86,7 @@ pkgs.runCommand "doom-private-config" { } ''
   cp ${pkgs.writeTextDir "config.el" configEl}/config.el $out/doom/config.el
 
   # Feature files (+*.el) - go into doom/+ subdirectory for load! macro
-  ${lib.concatMapStringsSep "\n" (f: "cp ${f} $out/doom/+/" ) lispFiles}
+  ${lib.concatMapStringsSep "\n" (f: "cp -r ${f}/* $out/doom/+/" ) lispFiles}
 
   # Copy extra files
   ${lib.concatMapStringsSep "\n" (p: "cp -r ${p}/* $out/doom/" ) extraFilePaths}
