@@ -11,24 +11,6 @@ let
   pkgName = p: if builtins.isString p then p else p.name;
   kept = lib.filter (p: !(lib.elem (pkgName p) (cfg.disablePackages or [ ])));
 
-  loadNames =
-    let
-      names = builtins.attrNames (cfg.generatedLisp or { });
-      plusFiles = builtins.filter (n: lib.hasPrefix "+" n) names;
-      stems = map (n: lib.removePrefix "+" (lib.removeSuffix ".el" n)) plusFiles;
-      order =
-        cfg.featureLoadOrder or [
-          "ui"
-          "editor"
-          "lsp"
-          "org"
-          "cursor"
-        ];
-      ordered = lib.filter (s: lib.elem s stems) order;
-      rest = lib.subtractLists ordered stems;
-    in
-    map (s: "+" + s) (ordered ++ rest) ++ (cfg.extraLispLoads or [ ]);
-
   initEl = elisp.mkInitEl {
     modules = cfg.finalModules;
     extraInit = cfg.extraInit or "";
@@ -43,13 +25,6 @@ let
       beforeMarker = cfg.extraPackagesBefore or "";
     }
     + (cfg.extraPackagesEl or "");
-
-  configEl = elisp.mkConfigEl {
-    loads = loadNames;
-    extraConfigEarly = cfg.extraConfigEarly or "";
-    extraConfig = cfg.extraConfig or "";
-    beforeMarker = cfg.extraConfigBefore or "";
-  };
 
   writeRel = name: text: pkgs.writeTextDir name text;
 
@@ -78,18 +53,19 @@ let
 in
 pkgs.runCommand "doom-private-config" { } ''
   set -e
-  mkdir -p $out/doom/+ $out/doom/themes $out/doom/snippets/rustic-mode
+  mkdir -p $out/doom $out/doom/themes $out/doom/snippets/rustic-mode
 
-  # Main config files
+  # Main config files (config.el is generated in ~/.config/doom by the
+  # Home Manager activation script; see modules/home-manager.nix)
   cp ${pkgs.writeTextDir "init.el" initEl}/init.el $out/doom/init.el
   cp ${pkgs.writeTextDir "packages.el" packagesEl}/packages.el $out/doom/packages.el
-  cp ${pkgs.writeTextDir "config.el" configEl}/config.el $out/doom/config.el
 
-  # Feature files (+*.el) - go into doom/+ subdirectory for load! macro
-  ${lib.concatMapStringsSep "\n" (f: "cp -r ${f}/* $out/doom/+/" ) lispFiles}
+  # Generated lisp files (+*.el, ...) - flat in DOOMDIR so `(load! "+foo")`
+  # resolves relative to the user's config.el
+  ${lib.concatMapStringsSep "\n" (f: "cp -r ${f}/* $out/doom/") lispFiles}
 
   # Copy extra files
-  ${lib.concatMapStringsSep "\n" (p: "cp -r ${p}/* $out/doom/" ) extraFilePaths}
+  ${lib.concatMapStringsSep "\n" (p: "cp -r ${p}/* $out/doom/") extraFilePaths}
 
   # Static assets
   cp ${static}/themes/*.el $out/doom/themes/

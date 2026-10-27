@@ -13,7 +13,7 @@ rebuild you run `doom sync` once when `init.el` / `packages.el` change.
 |-------|------------|
 | `nixosModules.default` | System Emacs, fonts, ripgrep/fd, language servers |
 | `homeModules.default` | Generates DOOMDIR, installs Emacs + tools, optional Doom clone |
-| `packages.doomDir` | The generated private config (buildable without Home Manager) |
+| `packages.doomDir` | The generated private config (buildable without Home Manager; no `config.el` — that one is written by the HM activation script) |
 | `lib.mkDoomDir` / `lib.evalDoom` | Evaluate or render the config from extra Nix modules |
 
 Namespace for all options: **`doomemacs.*`**.
@@ -113,7 +113,7 @@ LSPs system-wide; Home Manager writes `~/.config/doom`.
 |----------------|--------|
 | `init.el` | `doomemacs.modules` + `extraModules` |
 | `packages.el` | `doomemacs.packages` + `extraPackages` + `unpin` |
-| `config.el` | loads `+*.el`, then `extraConfig` |
+| `config.el` (in `~/.config/doom`) | managed block: `load!` lines + `extraConfig*`, plus your code between `@@USER_CODE@@` markers — no store copy |
 | `+ui.el` | `doomemacs.features.ui` + `doomemacs.ui.*` |
 | `+editor.el` | `doomemacs.features.editor` + `doomemacs.editor.*` |
 | `+lsp.el` | `doomemacs.features.lsp` + `doomemacs.lsp.*` |
@@ -123,8 +123,25 @@ LSPs system-wide; Home Manager writes `~/.config/doom`.
 | `themes/noctalia-theme.el` | vendored from the current config |
 | `snippets/rustic-mode/+reg.yasnippet` | vendored |
 
-Do not edit files under `~/.config/doom` — they are store-backed. Change Nix
-options and rebuild.
+`~/.config/doom/config.el` is generated in place by the activation script:
+
+```elisp
+;; Managed by the doomemacs Nix flake - regenerated on every switch.
+
+(load! "+ui")          ; managed block: extraConfigEarly, extraConfigBefore,
+(load! "+editor")      ; one load! per enabled +feature file, then extraConfig
+...
+
+;; @@USER_CODE_START@@
+;; Add your custom doom config below - preserved across regenerations
+(setq doom-font (font-spec :family "JetBrains Mono" :size 20))
+;; @@USER_CODE_END@@
+```
+
+Only the code between the `@@USER_CODE@@` markers is yours — it survives every
+`home-manager switch`. Everything else comes from Nix options; edit those and
+rebuild. The `+*.el` feature files sit flat in `~/.config/doom` so `load!`
+resolves them relative to `config.el`.
 
 ---
 
@@ -210,7 +227,7 @@ After rebuild: `doom sync`.
 
 ```nix
 doomemacs.extraConfigEarly = ''
-  ;; top of config.el
+  ;; top of the managed block in ~/.config/doom/config.el
 '';
 
 doomemacs.extraConfig = ''
@@ -224,8 +241,8 @@ doomemacs.extraInit = ''
 
 ### 4. New feature files (`+foo.el`)
 
-Any `generatedLisp` key that starts with `+` is written into DOOMDIR and
-`load!`ed from `config.el`:
+Any `generatedLisp` key that starts with `+` is written into `~/.config/doom`
+and `load!`ed from the managed block of `config.el`:
 
 ```nix
 doomemacs.generatedLisp."+mail.el" = ''
@@ -375,7 +392,7 @@ inputs.doomemacs.lib.mkDoomDir {
 
 ```text
 flake.nix
-lib/elisp.nix              init.el / packages.el / config.el generators
+lib/elisp.nix              init.el / packages.el generators
 lib/mk-doom-dir.nix        symlinkJoin of generated + static files
 modules/options.nix        all doomemacs.* options
 modules/defaults.nix       current private config as Nix
@@ -415,8 +432,10 @@ activation clone should have created that tree.
 
 **Packages missing after adding `extraPackages`.** Run `doom sync`, then restart.
 
-**Want to edit Elisp live.** Put experiments in `extraConfig` or a
-`generatedLisp."+scratch.el"` file in your Nix config — not in `~/.config/doom`.
+**Want to edit Elisp live.** Edit the block between the `@@USER_CODE@@`
+markers in `~/.config/doom/config.el` (your edits survive switches), or put
+experiments in `extraConfig` / a `generatedLisp."+scratch.el"` file in your
+Nix config.
 
 **Infinite recursion on `finalDoomDir`.** The Home Manager module strips that
 attribute before calling `mkDoomDir`. Custom modules should not assign

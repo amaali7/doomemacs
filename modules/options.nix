@@ -213,19 +213,19 @@ in
         "cursor"
         "gptel"
       ];
-      description = "Order of generated `+feature` files in config.el.";
+      description = "Order of generated `+feature` files `load!`ed from the managed block of the user's `config.el`.";
     };
 
     extraConfigEarly = mkOption {
       type = types.lines;
       default = "";
-      description = "Elisp inserted at the top of `config.el`.";
+      description = "Elisp inserted at the top of the managed block of the user's `config.el`.";
     };
 
     extraConfig = mkOption {
       type = types.lines;
       default = "";
-      description = "Elisp appended to `config.el` after feature loads.";
+      description = "Elisp appended after feature loads in the managed block of the user's `config.el`.";
     };
 
     extraInit = mkOption {
