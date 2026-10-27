@@ -32,6 +32,7 @@ let
   initEl = elisp.mkInitEl {
     modules = cfg.finalModules;
     extraInit = cfg.extraInit or "";
+    beforeMarker = cfg.extraInitBefore or "";
   };
 
   packagesEl =
@@ -39,6 +40,7 @@ let
       packages = kept (cfg.packages or [ ]);
       extraPackages = kept (cfg.extraPackages or [ ]);
       unpin = (cfg.unpin or [ ]) ++ (cfg.extraUnpin or [ ]);
+      beforeMarker = cfg.extraPackagesBefore or "";
     }
     + (cfg.extraPackagesEl or "");
 
@@ -46,6 +48,7 @@ let
     loads = loadNames;
     extraConfigEarly = cfg.extraConfigEarly or "";
     extraConfig = cfg.extraConfig or "";
+    beforeMarker = cfg.extraConfigBefore or "";
   };
 
   writeRel = name: text: pkgs.writeTextDir name text;
@@ -73,14 +76,22 @@ let
        "$out/snippets/rustic-mode/+reg.yasnippet"
   '';
 in
-pkgs.symlinkJoin {
-  name = "doom-private-config";
-  paths = [
-    (writeRel "init.el" initEl)
-    (writeRel "packages.el" packagesEl)
-    (writeRel "config.el" configEl)
-    static
-  ]
-  ++ lispFiles
-  ++ extraFilePaths;
-}
+pkgs.runCommand "doom-private-config" { } ''
+  set -e
+  mkdir -p $out/doom/+ $out/doom/themes $out/doom/snippets/rustic-mode
+
+  # Main config files
+  cp ${pkgs.writeTextDir "init.el" initEl}/init.el $out/doom/init.el
+  cp ${pkgs.writeTextDir "packages.el" packagesEl}/packages.el $out/doom/packages.el
+  cp ${pkgs.writeTextDir "config.el" configEl}/config.el $out/doom/config.el
+
+  # Feature files (+*.el) - go into doom/+ subdirectory for load! macro
+  ${lib.concatMapStringsSep "\n" (f: "cp ${f} $out/doom/+/" ) lispFiles}
+
+  # Copy extra files
+  ${lib.concatMapStringsSep "\n" (p: "cp -r ${p}/* $out/doom/" ) extraFilePaths}
+
+  # Static assets
+  cp ${static}/themes/*.el $out/doom/themes/
+  cp ${static}/snippets/rustic-mode/* $out/doom/snippets/rustic-mode/
+''
