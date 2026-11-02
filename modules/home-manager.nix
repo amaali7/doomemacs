@@ -83,8 +83,7 @@ in
     ./features/editor.nix
     ./features/lsp.nix
     ./features/org.nix
-    ./features/cursor.nix
-    ./features/gptel.nix
+    ./features/opencode.nix
   ];
 
   config = lib.mkMerge [

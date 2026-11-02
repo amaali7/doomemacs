@@ -131,10 +131,9 @@ in
       org = mkEnableOption "Org feature file (`+org.el`)" // {
         default = true;
       };
-      cursor = mkEnableOption "Cursor IDE/CLI feature file (`+cursor.el`)" // {
+      opencode = mkEnableOption "opencode feature file (`+opencode.el`)" // {
         default = true;
       };
-      gptel = mkEnableOption "gptel feature file (`+gptel.el`)";
     };
 
     modules = mkOption {
@@ -210,8 +209,7 @@ in
         "editor"
         "lsp"
         "org"
-        "cursor"
-        "gptel"
+        "opencode"
       ];
       description = "Order of generated `+feature` files `load!`ed from the managed block of the user's `config.el`.";
     };
@@ -372,31 +370,14 @@ in
       };
     };
 
-    cursor = {
-      extraConfig = mkOption {
-        type = types.lines;
-        default = "";
-      };
-    };
-
-    gptel = {
-      defaultModel = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-        example = "gpt-4.1";
-        description = ''
-          Default model name shown as a comment in `+gptel.el`. The model
-          itself must be defined by the user (via `gptel.extraConfig` or
-          user config) since it depends on backends and API keys.
-        '';
-      };
+    opencode = {
       extraConfig = mkOption {
         type = types.lines;
         default = "";
         description = ''
-          Elisp appended inside `+gptel.el`. Use this to define backends
-          (`gptel-make-openai`, `gptel-make-anthropic`, ...) and set
-          `gptel-model` / API keys. Left to the user on purpose.
+          Elisp appended inside `+opencode.el`. Use this to set options such as
+          `opencode-session-default-agent`, `opencode-session-default-variant`,
+          or `opencode-session-show-reasoning`. Left to the user on purpose.
         '';
       };
     };

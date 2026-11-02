@@ -192,12 +192,12 @@
       }
       { name = "verb"; }
       { name = "javelin"; }
+      { name = "request"; }
       {
-        name = "cursor-agent";
+        name = "emacs-opencode";
         recipe = {
           host = "github";
-          repo = "chocoelho/cursor-agent.el";
-          files = [ "cursor-agent.el" ];
+          repo = "jdormit/emacs-opencode";
         };
       }
     ];

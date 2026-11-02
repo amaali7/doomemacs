@@ -2,7 +2,7 @@
 
 Declarative [Doom Emacs](https://github.com/doomemacs/doomemacs) private config
 as a **Nix flake**. It encodes the current `~/.dotfiles/doom` setup (modules,
-packages, UI, LSP, Org, Cursor) as **Nix modules** you can enable, override, and
+packages, UI, LSP, Org, OpenCode) as **Nix modules** you can enable, override, and
 extend without hand-editing generated Elisp.
 
 Generated files land in `$XDG_CONFIG_HOME/doom` (usually `~/.config/doom`).
@@ -118,8 +118,7 @@ LSPs system-wide; Home Manager writes `~/.config/doom`.
 | `+editor.el` | `doomemacs.features.editor` + `doomemacs.editor.*` |
 | `+lsp.el` | `doomemacs.features.lsp` + `doomemacs.lsp.*` |
 | `+org.el` | `doomemacs.features.org` + `doomemacs.org.*` |
-| `+cursor.el` | `doomemacs.features.cursor` + `doomemacs.cursor.*` |
-| `+gptel.el` | `doomemacs.features.gptel` + `doomemacs.gptel.*` (opt-in) |
+| `+opencode.el` | `doomemacs.features.opencode` + `doomemacs.opencode.*` |
 | `themes/noctalia-theme.el` | vendored from the current config |
 | `snippets/rustic-mode/+reg.yasnippet` | vendored |
 
@@ -160,7 +159,8 @@ Doom modules enabled out of the box:
 - **config:** default+bindings+smartparens
 
 Extra `package!` entries: catppuccin-theme, alabaster-themes, org-roam-ui,
-el-easydraw, nushell-mode, nushell-ts-mode, verb, javelin, cursor-agent.
+el-easydraw, nushell-mode, nushell-ts-mode, verb, javelin, request,
+emacs-opencode.
 
 UI: JetBrains Mono 12.5 semi-light, Fira Sans 12.5, theme `catppuccin`, relative
 line numbers.
@@ -168,7 +168,7 @@ line numbers.
 Editor: bash for scripts, Nushell for vterm, case-sensitive buffer search,
 Dirvish on `SPC -` / `SPC 5` / `SPC 6`, javelin `M-1`…`M-9`.
 
-Cursor: `SPC c A` prefix (prompt, interactive, region, open in Cursor IDE, …).
+OpenCode: `SPC c A` prefix (new session, ask, open session, MCP status, …).
 
 ---
 
@@ -254,35 +254,33 @@ doomemacs.generatedLisp."+mail.el" = ''
 Disable a shipped feature (file omitted from the store):
 
 ```nix
-doomemacs.features.cursor = false;
+doomemacs.features.opencode = false;
 ```
 
-### gptel (opt-in)
+### opencode
 
-gptel is shipped as a disabled-by-default feature so models and API keys stay
-in your own config. Enable it from your NixOS / Home Manager flake:
+[emacs-opencode](https://github.com/jdormit/emacs-opencode) is a native Emacs
+client for the [OpenCode 2](https://opencode.ai) CLI: open sessions, chat, stream
+responses, and manage agents from plain Emacs buffers.
+
+It is enabled by default and adds `(package! request)` and
+`(package! emacs-opencode :recipe (:host github :repo "jdormit/emacs-opencode"))`
+plus a `+opencode.el` with a `use-package! emacs-opencode` setup and a
+`<leader> c A` keymap (`n` new session, `a`/`c` ask, `o` open, `s`/`S` send,
+`m` MCP status, `d`/`r` disconnect/restart).
+
+Requirements are on you except `curl` (installed via the feature): the
+`opencode` CLI must be on `PATH` — e.g. `doomemacs.extraBinPackages = [ pkgs.opencode ]`
+in your NixOS / Home Manager flake, or install OpenCode yourself.
+
+Tweak behaviour from your own config:
 
 ```nix
-doomemacs.features.gptel = true;
-
-# Backends, models, and API keys are yours to define:
-doomemacs.gptel.extraConfig = ''
-  (gptel-make-openai "OpenAI"
-    :key (gptel-api-key-from-auth-source "api.openai.com"))
-  (gptel-make-anthropic "Claude"
-    :key (lambda () (auth-source-pick-first-password :host "api.anthropic.com")))
-  (setq gptel-model 'gpt-4.1
-        gptel-backend (gptel-get-backend "Claude"))
+doomemacs.opencode.extraConfig = ''
+  (setq opencode-session-default-agent "build"
+        opencode-session-show-reasoning t)
 '';
-
-# Optional: just a comment hint in the generated file
-doomemacs.gptel.defaultModel = "gpt-4.1";
 ```
-
-Enabling the feature adds `(package! gptel)` and a `+gptel.el` with a
-`use-package! gptel` base setup plus a `<leader> G` keymap (`g` chat buffer,
-`s` send, `m` menu, `a`/`r` context, `w` rewrite). All model/provider/key
-configuration is yours, via `doomemacs.gptel.extraConfig`.
 
 ### 5. Snippets, themes, other files
 
@@ -396,7 +394,7 @@ lib/elisp.nix              init.el / packages.el generators
 lib/mk-doom-dir.nix        symlinkJoin of generated + static files
 modules/options.nix        all doomemacs.* options
 modules/defaults.nix       current private config as Nix
-modules/features/{ui,editor,lsp,org,cursor}.nix
+modules/features/{ui,editor,lsp,org,opencode}.nix
 modules/home-manager.nix
 modules/nixos.nix
 doom/themes/               noctalia theme
@@ -446,21 +444,27 @@ Use `homeModules.default` (or `nix build .#doomDir` and copy) for the config.
 
 ---
 
-## Cursor
+## OpenCode
 
-Cursor CLI (`agent` / `cursor-agent`) is expected on `PATH` or in
-`~/.local/bin` (the Elisp adds that directory). Leader: **`SPC c A`**.
+[emacs-opencode](https://github.com/jdormit/emacs-opencode) needs the
+`opencode` CLI (OpenCode 2) on `PATH` plus `curl`; the feature installs `curl`
+via `doomemacs.extraBinPackages` and pulls in the Emacs packages `request` and
+`emacs-opencode` from GitHub. Leader: **`SPC c A`**.
 
 | Key | Command |
 |-----|---------|
-| `a` | Prompt |
-| `i` | Interactive session |
-| `r` | Region |
-| `o` / `O` | Open file / project in Cursor IDE |
-| `L` / `s` / `v` | Login / status / verify |
-| `I` | Install/reinstall CLI |
+| `n` | New session |
+| `a` / `c` | Ask / ask with buffer context |
+| `o` | Open an existing session |
+| `s` / `S` | Send prompt / prompt + context to a session |
+| `m` | MCP server status |
+| `d` / `r` | Disconnect / restart service |
 
-Disable with `doomemacs.features.cursor = false`.
+In a session buffer: `C-c C-c` send, `C-c C-a` agent, `C-c C-l` model/provider,
+`C-c C-o` slash command, `C-c C-x` compact, `C-c C-f` fork — plus drawers
+(`TAB`), subagent navigation (`RET`), and reasoning toggle (`C-c C-t`).
+
+Disable with `doomemacs.features.opencode = false`.
 
 ---
 
